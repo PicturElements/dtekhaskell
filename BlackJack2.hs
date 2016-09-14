@@ -2,7 +2,7 @@ module BlackJack where
 
 import Cards
 import Wrapper
-import Test.QuickCheck -- hiding (shuffle)
+import Test.QuickCheck --hiding (shuffle)
 
 --size hand2
 --    = size (Add (Card (Numeric 2) Hearts) (Add (Card Jack Spades) Empty)
@@ -66,6 +66,7 @@ winner (Add card1 hand1) (Add card2 hand2)
       (gameOver (Add card2 hand2) == False) = Bank
     | otherwise = Guest
 
+--Task C
 (<+) :: Hand -> Hand -> Hand
 (<+) Empty h2 = h2
 (<+) h1 Empty = h1
@@ -76,3 +77,28 @@ prop_onTopOf_assoc p1 p2 p3 = p1 <+ (p2 <+ p3) == (p1 <+ p2) <+ p3
 
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf h1 h2 = ((size h1) + (size h2)) == size (h1 <+ h2)
+
+--Task D
+fullDeck :: Hand
+fullDeck = (allCardsInSuit Clubs <+
+            allCardsInSuit Diamonds <+
+            allCardsInSuit Spades <+
+            allCardsInSuit Hearts)
+
+allCardsInSuit :: Suit -> Hand
+allCardsInSuit s = (Add (Card Ace s)
+                   (Add (Card (Numeric 2) s)
+                   (Add (Card (Numeric 3) s)
+                   (Add (Card (Numeric 4) s)
+                   (Add (Card (Numeric 5) s)
+                   (Add (Card (Numeric 6) s)
+                   (Add (Card (Numeric 7) s)
+                   (Add (Card (Numeric 8) s)
+                   (Add (Card (Numeric 9) s)
+                   (Add (Card (Numeric 10) s)
+                   (Add (Card Jack s)
+                   (Add (Card Queen s)
+                   (Add (Card King s) Empty)))))))))))))
+
+draw :: Hand -> Hand -> Hand
+draw h deck | 
