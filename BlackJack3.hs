@@ -2,7 +2,7 @@ module BlackJack where
 
 import Cards
 import Wrapper
-import Test.QuickCheck --hiding (shuffle)
+import Test.QuickCheck hiding (shuffle)
 import System.Random
 
 --size hand2
@@ -55,7 +55,7 @@ numberOfAces (Add card hand)            = 0 + numberOfAces hand
 value :: Hand -> Integer
 value Empty = 0
 value (Add card hand) | ((valueCard (card) + value hand) > 21)
-			= valueCard (card)
+            = valueCard (card)
                         - (10 * numberOfAces (Add card hand)) + value hand
 value (Add card hand) | otherwise = valueCard (card) + value hand
 
@@ -110,12 +110,33 @@ playBank' deck bankHand  | value bankHand < 16 = playBank' deck' bankHand'
                          | otherwise = bankHand
     where (deck', bankHand') = draw deck bankHand
 
---Task G
-shuffle :: StdGen -> Hand -> Hand
-shuffle s deck = shuffle' s deck Empty
 
-shuffle' :: StdGen -> Hand -> Hand -> Hand
-shuffle' s Empty newDeck = newDeck
-shuffle' s deck newDeck | (randomR (1,(size fullDeck)) (mkStdGen 12345))
+{-test a | a == 3 = "YES!"
+       | otherwise = "NO..."
+    where a = 3-}
 
-shuffle'' :: 
+
+
+
+
+-- Wrapper
+shuffle :: Hand -> Hand
+shuffle Empty = error "Empty deck!"
+shuffle a = shuffle' a Empty 123457
+
+-- Input hand -> constructed hand -> seed -> output hand
+shuffle' :: Hand -> Hand -> Int -> Hand
+shuffle' a b s | size a == 1 = (Add card b)
+               | size a > 1 = shuffle' restDeck (Add card b) 1
+    where (restDeck, card) = 
+	           shuffle'' a Empty (Card Ace Diamonds) (fst (getTuples a s))
+
+--getTuples :: Int -> Int -> (Int, StdGen)
+getTuples a s = randomR (1,size a) (mkStdGen s)
+
+-- Input hand -> output hand -> single card -> countdown -> output hand -> single card
+-- Example input: shuffle'' fullDeck Empty (Card (Numeric 9) Diamonds) 52 -> returns first card in full deck
+shuffle'' :: Hand -> Hand -> Card -> Int -> (Hand, Card)
+shuffle'' Empty h2 h3 _ = (h2, h3)
+shuffle'' (Add single h) h2 h3 1 = shuffle'' h h2 single 0
+shuffle'' (Add single h) h2 h3 c = shuffle'' h (Add single h2) h3 (c-1)
