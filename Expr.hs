@@ -42,30 +42,38 @@ type Parser a = String -> Maybe (a,String)
 
 number :: Parser Double
 number s = case (reads s :: [(Double,String)]) of
-       [(d,str)] -> Just (d,str)
+       [(d,str)] -> Just (d, str)
        []        -> Nothing
 
 num :: Parser Expr
 num s = case number s of
-    Just (n,s1) -> Just (Num n, s1)
-    Nothing     -> Nothing
+    Just (n,s1)  -> Just (Num n, s1)
+    Nothing      -> case head s of
+                          'x' -> Just (Var, (tail s))
+                          _   -> Nothing
 
 factor ('(':s) = case expr s of
-   Just(e,')':s1) -> Just (e, s1)
-   _              -> Nothing
-factor s       = num s    
+    Just(e,')':s1) -> Just (e, s1)
+    _              -> Nothing
+factor ('s':'i':'n':s1) = case factor s1 of 
+    Just (e, str) -> Just (Fun Sin e, str)
+    _             -> Nothing
+factor ('c':'o':'s':s1) = case factor s1 of 
+    Just (e, str) -> Just (Fun Cos e, str)
+    _             -> Nothing
+factor s           = num s
 
-term s = chain factor '*' Mul s
+term s = chain factor "*" Mul s
     
-chain :: Parser a -> Char -> (a -> a -> a) ->  Parser a
+chain :: Parser a -> String -> (a -> a -> a) ->  Parser a
 chain p op f s = case p s of
   Just (ne,c:s1)
-         |c == op -> case chain p op f s1 of
-                              Just(e,s2) -> Just (f ne e, s2)
-                              Nothing    -> Just (ne,c:s1)
+         |[c] == op -> case chain p op f s1 of
+                          Just (e,s2) -> Just (f ne e, s2)
+                          Nothing     -> Just (ne,c:s1)
   r               -> r
 
-expr = chain term '+' Add 
+expr = chain term "+" Add 
 
 readExpr :: String -> Maybe Expr
 readExpr s = coreRead (remSpaces s "")
@@ -78,7 +86,11 @@ remSpaces "" n                  = n
 remSpaces (c:str) n | c == ' '  = remSpaces str n
                     | otherwise = remSpaces str (n++[c])
                     
-fullEval :: String -> Double
-fullEval s = case readExpr s of
-            Just e  -> eval e 0
-            Nothing -> 0/0      --Whoops! That's not a number...
+fullEval :: String -> Double -> Double
+fullEval s d = case readExpr s of
+              Just e  -> eval e d
+              Nothing -> 0/0      --Whoops! That's not a number...
+     
+toExpr :: Maybe Expr -> String
+toExpr Nothing = "null"
+toExpr e       = showExpr (fromJust e)
